@@ -256,16 +256,16 @@ export class AuthService {
     };
 
     return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN as string,
-    });
+      expiresIn: this.JWT_EXPIRES_IN,
+    } as jwt.SignOptions);
   }
 
   private generateRefreshToken(userId: string): string {
     const payload = { sub: userId };
 
     return jwt.sign(payload, this.REFRESH_TOKEN_SECRET, {
-      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN as string,
-    });
+      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+    } as jwt.SignOptions);
   }
 
   verifyToken(token: string): TokenPayloadDto {
