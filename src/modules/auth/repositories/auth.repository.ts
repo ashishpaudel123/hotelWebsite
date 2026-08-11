@@ -1,7 +1,6 @@
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, IUser } from '../../../models/User';
 import { Role, IRole } from '../../../models/Role';
-import { Permission } from '../../../models/Permission';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('AuthRepository');

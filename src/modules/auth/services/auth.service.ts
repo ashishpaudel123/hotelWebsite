@@ -69,8 +69,9 @@ export class AuthService {
     // Get user permissions
     const permissions = await this.authRepository.getUserPermissions(user._id.toString());
 
-    // Generate tokens
-    const accessToken = this.generateAccessToken(user._id.toString(), user.email, user.role?.slug || 'customer', permissions);
+    // Generate tokens - role is populated from repository
+    const userRole = user.role as any;
+    const accessToken = this.generateAccessToken(user._id.toString(), user.email, userRole?.slug || 'customer', permissions);
     const refreshToken = this.generateRefreshToken(user._id.toString());
 
     // Update user
@@ -88,7 +89,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role?.slug || 'customer',
+        role: (user.role as any)?.slug || 'customer',
         permissions,
       },
     };
@@ -175,8 +176,9 @@ export class AuthService {
     // Get updated permissions
     const permissions = await this.authRepository.getUserPermissions(user._id.toString());
 
-    // Generate new access token
-    const accessToken = this.generateAccessToken(user._id.toString(), user.email, user.role?.slug || 'customer', permissions);
+    // Generate new access token - role is populated from repository
+    const userRole = user.role as any;
+    const accessToken = this.generateAccessToken(user._id.toString(), user.email, userRole?.slug || 'customer', permissions);
 
     logger.debug('Access token refreshed', { userId: user._id });
 
@@ -189,7 +191,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role?.slug || 'customer',
+        role: (user.role as any)?.slug || 'customer',
         permissions,
       },
     };
@@ -254,7 +256,7 @@ export class AuthService {
     };
 
     return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN,
+      expiresIn: this.JWT_EXPIRES_IN as string,
     });
   }
 
@@ -262,7 +264,7 @@ export class AuthService {
     const payload = { sub: userId };
 
     return jwt.sign(payload, this.REFRESH_TOKEN_SECRET, {
-      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN as string,
     });
   }
 
