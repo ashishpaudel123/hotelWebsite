@@ -16,9 +16,29 @@ export class AuthService {
 
   constructor() {
     this.authRepository = new AuthRepository();
-    this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    
+    // Validate required environment variables
+    const jwtSecret = process.env.JWT_SECRET;
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+    
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    if (!refreshTokenSecret) {
+      throw new Error('REFRESH_TOKEN_SECRET environment variable is required');
+    }
+    
+    // Validate minimum key lengths for security
+    if (jwtSecret.length < 32) {
+      throw new Error('JWT_SECRET must be at least 32 characters long');
+    }
+    if (refreshTokenSecret.length < 32) {
+      throw new Error('REFRESH_TOKEN_SECRET must be at least 32 characters long');
+    }
+    
+    this.JWT_SECRET = jwtSecret;
     this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-    this.REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key';
+    this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
     this.REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
   }
 
@@ -177,7 +197,7 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.authRepository.findByEmail(email);
-    
+
     // Always return success message to prevent email enumeration
     if (!user) {
       logger.debug('Forgot password requested for non-existent email', { email });
@@ -185,16 +205,23 @@ export class AuthService {
     }
 
     const resetToken = await this.authRepository.createPasswordResetToken(user._id.toString());
+
+    // Send email with reset token using Notification Service
+    // Note: Email service should be implemented before production
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
     
-    // TODO: Send email with reset token using Notification Service
-    logger.info('Password reset token created', { userId: user._id, email });
-    
+    logger.info('Password reset token created (email notification pending implementation)', { 
+      userId: user._id, 
+      email,
+      resetUrl 
+    });
+
     return { message: 'If the email exists, a reset link has been sent' };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     const user = await this.authRepository.findUserByResetToken(token);
-    
+
     if (!user) {
       logger.warn('Invalid or expired reset token', { token });
       throw new AppError('Invalid or expired reset token', 400, 'AUTH_006');
