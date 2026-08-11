@@ -13,7 +13,7 @@ export class AuthController {
       const result = await authService.login(req.body);
       return responseHandler.success(res, result, 'Login successful');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -23,7 +23,7 @@ export class AuthController {
       const result = await authService.register(req.body);
       return responseHandler.created(res, result, 'Registration successful');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -33,7 +33,7 @@ export class AuthController {
       const result = await authService.refreshToken(req.body.refreshToken);
       return responseHandler.success(res, result, 'Token refreshed successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -43,7 +43,7 @@ export class AuthController {
       const result = await authService.forgotPassword(req.body.email);
       return responseHandler.success(res, result, result.message);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -53,7 +53,7 @@ export class AuthController {
       const result = await authService.resetPassword(req.body.token, req.body.newPassword);
       return responseHandler.success(res, result, result.message);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class AuthController {
       const result = await authService.logout(userId);
       return responseHandler.success(res, result, result.message);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -83,7 +83,7 @@ export class AuthController {
       const user = (req as any).user;
       return responseHandler.success(res, user, 'Profile retrieved successfully');
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

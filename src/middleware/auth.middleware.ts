@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -58,7 +58,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 };
 
 export const authorize = (...permissions: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401, 'AUTH_008');
@@ -98,7 +98,7 @@ export const authorize = (...permissions: string[]) => {
 };
 
 export const checkRole = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401, 'AUTH_008');
@@ -120,7 +120,7 @@ export const checkRole = (...roles: string[]) => {
   };
 };
 
-export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 

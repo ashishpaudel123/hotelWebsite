@@ -138,7 +138,6 @@ const userSchema = new Schema<IUser>(
 );
 
 // Indexes for performance
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1, status: 1 });
 userSchema.index({ phone: 1 });
 userSchema.index({ status: 1, isDeleted: 1 });
@@ -158,9 +157,9 @@ userSchema.pre('save', async function(next) {
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
+    return next();
   } catch (error: any) {
-    next(error);
+    return next(error);
   }
 });
 

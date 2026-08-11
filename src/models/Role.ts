@@ -107,7 +107,6 @@ const roleSchema = new Schema<IRole>(
 );
 
 // Indexes for performance
-roleSchema.index({ slug: 1 }, { unique: true });
 roleSchema.index({ status: 1 });
 roleSchema.index({ accessLevel: 1 });
 roleSchema.index({ isSystem: 1, status: 1 });
@@ -121,7 +120,7 @@ roleSchema.pre('findOneAndUpdate', async function(next) {
       return next(new Error('Cannot delete system roles'));
     }
   }
-  next();
+  return next();
 });
 
 export const Role = mongoose.model<IRole>('Role', roleSchema);

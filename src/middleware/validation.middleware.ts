@@ -31,12 +31,12 @@ export const validationMiddleware = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await validateRequest(req, schema);
-      next();
+      return next();
     } catch (error: any) {
       if (error.status === 400 && error.details) {
         return responseHandler.validation(res, error.details);
       }
-      next(error);
+      return next(error);
     }
   };
 };
