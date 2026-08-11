@@ -29,7 +29,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     }
 
     const token = authHeader.split(' ')[1];
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    const JWT_SECRET = process.env.JWT_SECRET;
+
+    if (!JWT_SECRET) {
+      logger.error('JWT_SECRET not configured in environment variables');
+      throw new AppError('Server configuration error', 500, 'SYS_001');
+    }
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     req.user = decoded;
@@ -43,9 +48,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     } else if (error.name === 'TokenExpiredError') {
       logger.warn('Token expired', { error: error.message });
       next(new AppError('Token expired', 401, 'AUTH_002'));
+    } else if (error instanceof AppError) {
+      next(error);
     } else {
       logger.error('Authentication error', { error });
-      next(error);
+      next(new AppError('Authentication failed', 401, 'AUTH_009'));
     }
   }
 };
@@ -119,14 +126,18 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+      const JWT_SECRET = process.env.JWT_SECRET;
 
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-        req.user = decoded;
-        logger.debug('Optional auth: User authenticated', { userId: decoded.sub });
-      } catch (error) {
-        logger.debug('Optional auth: Invalid token, continuing as guest');
+      if (JWT_SECRET) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+          req.user = decoded;
+          logger.debug('Optional auth: User authenticated', { userId: decoded.sub });
+        } catch (error) {
+          logger.debug('Optional auth: Invalid token, continuing as guest');
+        }
+      } else {
+        logger.warn('Optional auth: JWT_SECRET not configured');
       }
     }
 
