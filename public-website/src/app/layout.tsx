@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'en_US',
       siteName: settings?.siteName || 'Luxury Hotel',
-      images: settings?.socialMedia?.ogImage ? [{ url: settings.socialMedia.ogImage }] : [],
+      images: ['/og-image.jpg'],
     },
     twitter: {
       card: 'summary_large_image',

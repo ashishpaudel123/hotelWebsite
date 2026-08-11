@@ -16,9 +16,15 @@ export class AuthService {
 
   constructor() {
     this.authRepository = new AuthRepository();
-    this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    this.JWT_SECRET = process.env.JWT_SECRET;
     this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-    this.REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key';
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+      throw new Error('REFRESH_TOKEN_SECRET environment variable is required');
+    }
+    this.REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
     this.REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
   }
 
@@ -50,7 +56,7 @@ export class AuthService {
     const permissions = await this.authRepository.getUserPermissions(user._id.toString());
 
     // Generate tokens
-    const accessToken = this.generateAccessToken(user._id.toString(), user.email, user.role?.slug || 'customer', permissions);
+    const accessToken = this.generateAccessToken(user._id.toString(), user.email, (user.role as any)?.slug || 'customer', permissions);
     const refreshToken = this.generateRefreshToken(user._id.toString());
 
     // Update user
@@ -68,7 +74,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role?.slug || 'customer',
+        role: (user.role as any)?.slug || 'customer',
         permissions,
       },
     };
@@ -84,9 +90,6 @@ export class AuthService {
       throw new AppError('Email already registered', 409, 'AUTH_002');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     // Get default role
     const defaultRole = await this.authRepository.findDefaultUserRole();
     if (!defaultRole) {
@@ -94,12 +97,12 @@ export class AuthService {
       throw new AppError('System configuration error', 500, 'SYS_001');
     }
 
-    // Create user
+    // Create user (password will be hashed by model pre-save hook)
     const user = await this.authRepository.create({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      password,
       phone,
       role: defaultRole._id,
       status: 'active',
@@ -147,29 +150,31 @@ export class AuthService {
       throw new AppError('User not found', 404, 'AUTH_005');
     }
 
-    if (user.refreshToken !== refreshToken) {
-      logger.warn('Refresh token mismatch', { userId: user._id });
+    if (!user.refreshToken || user.refreshToken !== refreshToken) {
+      logger.warn('Refresh token mismatch or reused', { userId: user._id });
+      await this.authRepository.updateRefreshToken(user._id.toString(), null);
       throw new AppError('Invalid refresh token', 401, 'AUTH_004');
     }
 
-    // Get updated permissions
     const permissions = await this.authRepository.getUserPermissions(user._id.toString());
 
-    // Generate new access token
-    const accessToken = this.generateAccessToken(user._id.toString(), user.email, user.role?.slug || 'customer', permissions);
+    const newRefreshToken = this.generateRefreshToken(user._id.toString());
+    await this.authRepository.updateRefreshToken(user._id.toString(), newRefreshToken);
+
+    const accessToken = this.generateAccessToken(user._id.toString(), user.email, (user.role as any)?.slug || 'customer', permissions);
 
     logger.debug('Access token refreshed', { userId: user._id });
 
     return {
       accessToken,
-      refreshToken,
+      refreshToken: newRefreshToken,
       expiresIn: parseInt(this.JWT_EXPIRES_IN) * 60,
       user: {
         id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role?.slug || 'customer',
+        role: (user.role as any)?.slug || 'customer',
         permissions,
       },
     };
@@ -184,11 +189,9 @@ export class AuthService {
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
-    const resetToken = await this.authRepository.createPasswordResetToken(user._id.toString());
-    
-    // TODO: Send email with reset token using Notification Service
+    await this.authRepository.createPasswordResetToken(user._id.toString());
     logger.info('Password reset token created', { userId: user._id, email });
-    
+
     return { message: 'If the email exists, a reset link has been sent' };
   }
 
@@ -226,16 +229,16 @@ export class AuthService {
       permissions,
     };
 
-    return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN,
+    return jwt.sign(payload, this.JWT_SECRET as import('jsonwebtoken').Secret, {
+      expiresIn: this.JWT_EXPIRES_IN as import('ms').StringValue,
     });
   }
 
   private generateRefreshToken(userId: string): string {
     const payload = { sub: userId };
 
-    return jwt.sign(payload, this.REFRESH_TOKEN_SECRET, {
-      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+    return jwt.sign(payload, this.REFRESH_TOKEN_SECRET as import('jsonwebtoken').Secret, {
+      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN as import('ms').StringValue,
     });
   }
 

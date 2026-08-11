@@ -7,8 +7,7 @@ import { api } from '@/lib/api';
 import { Room } from '@/types';
 
 async function RoomsList() {
-  const data = await api.getRooms();
-  const rooms: Room[] = data.rooms || [];
+  const rooms: Room[] = await api.getRooms();
 
   if (rooms.length === 0) {
     return (

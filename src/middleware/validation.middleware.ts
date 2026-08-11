@@ -1,14 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema, ZodError, z } from 'zod';
 import { responseHandler } from '../utils/responseHandler';
 
 export const validateRequest = async (req: Request, schema: ZodSchema) => {
   try {
-    await schema.parseAsync({
-      body: req.body,
-      query: req.query,
-      params: req.params,
-    });
+    const shape = (schema as any).shape || {};
+    let dataToValidate: any;
+
+    if (shape.email && shape.password) {
+      dataToValidate = req.body;
+    } else if (shape.page || shape.limit) {
+      dataToValidate = req.query;
+    } else if (shape.id) {
+      dataToValidate = req.params;
+    } else {
+      dataToValidate = req.body;
+    }
+
+    await schema.parseAsync(dataToValidate);
   } catch (error) {
     if (error instanceof ZodError) {
       const details = error.errors.map((err) => ({
@@ -31,12 +40,12 @@ export const validationMiddleware = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await validateRequest(req, schema);
-      next();
+      return next();
     } catch (error: any) {
       if (error.status === 400 && error.details) {
         return responseHandler.validation(res, error.details);
       }
-      next(error);
+      return next(error);
     }
   };
 };
@@ -44,15 +53,15 @@ export const validationMiddleware = (schema: ZodSchema) => {
 // Validation helper for query parameters with pagination
 export const paginateSchema = {
   page: (defaultPage: number = 1) => 
-    require('zod').z.coerce.number().int().min(1).default(defaultPage),
+    z.coerce.number().int().min(1).default(defaultPage),
   limit: (defaultLimit: number = 20) => 
-    require('zod').z.coerce.number().int().min(1).max(100).default(defaultLimit),
+    z.coerce.number().int().min(1).max(100).default(defaultLimit),
   sortBy: (defaultSort: string = 'createdAt') => 
-    require('zod').z.string().default(defaultSort),
+    z.string().default(defaultSort),
   sortOrder: () => 
-    require('zod').z.enum(['asc', 'desc']).default('desc'),
+    z.enum(['asc', 'desc']).default('desc'),
   search: () => 
-    require('zod').z.string().optional(),
+    z.string().optional(),
   status: () => 
-    require('zod').z.enum(['active', 'inactive', 'deleted']).optional(),
+    z.enum(['active', 'inactive', 'deleted']).optional(),
 };

@@ -66,7 +66,8 @@ export interface Booking {
   bookingReference: string;
   customerId: {
     _id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
   };
@@ -310,4 +311,23 @@ export interface PaginationParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filters?: Record<string, any>;
+}
+
+export interface DashboardStats {
+  totalBookings: number;
+  totalRooms: number;
+  totalRoomTypes: number;
+  totalUsers: number;
+  revenue: number;
+  occupancy: Record<string, number>;
+  recentBookings: Array<{
+    _id: string;
+    bookingReference: string;
+    customer: string;
+    email: string;
+    checkIn: string;
+    checkOut: string;
+    status: string;
+    total: number;
+  }>;
 }

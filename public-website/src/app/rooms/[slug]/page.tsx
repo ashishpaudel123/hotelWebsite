@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { Room, SEO } from '@/types';
+import BookingForm from '@/components/booking/BookingForm';
 import type { Metadata } from 'next';
 
 interface PageProps {
@@ -152,51 +153,7 @@ export default async function RoomDetailPage({ params }: PageProps) {
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardContent className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">Book Your Stay</h3>
-                  <p className="text-sm opacity-80">Best price guaranteed</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Check-in</label>
-                    <input
-                      type="date"
-                      className="w-full px-4 py-2 border rounded-md bg-background"
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Check-out</label>
-                    <input
-                      type="date"
-                      className="w-full px-4 py-2 border rounded-md bg-background"
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Guests</label>
-                    <select className="w-full px-4 py-2 border rounded-md bg-background">
-                      {Array.from({ length: room.roomType.maxOccupancy }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1} {i === 0 ? 'Guest' : 'Guests'}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <Button className="w-full" size="lg">
-                  Check Availability
-                </Button>
-
-                <p className="text-xs text-center opacity-60">
-                  No payment required now
-                </p>
-              </CardContent>
-            </Card>
+            <BookingForm room={room} />
           </div>
         </div>
       </div>

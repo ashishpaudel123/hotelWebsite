@@ -1,0 +1,21 @@
+import { Application } from 'express';
+import './models/User';
+import './models/Role';
+import './models/Permission';
+import './models/RoomType';
+import './models/Room';
+import './models/WebsiteSettings';
+import './models/HomepageSection';
+import './models/Blog';
+import './models/Event';
+import './models/MenuCategory';
+import './models/MenuItem';
+import './models/GalleryImage';
+import './models/Testimonial';
+import './models/Booking';
+import './models/Payment';
+import './models/Coupon';
+export declare const app: Application;
+export declare const startServer: () => Promise<void>;
+export default app;
+//# sourceMappingURL=server.d.ts.map

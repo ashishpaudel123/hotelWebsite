@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
-import { ApiResponse, PaginationParams, User, Role, Permission } from '@/types';
+import { ApiResponse, PaginationParams, User, Role, Permission, DashboardStats, Booking, Room, MenuCategory, MenuItem, GalleryItem, Blog, Event, HomepageSection, Coupon, EmailTemplate, NotificationTemplate, AnalyticsData, WebsiteSettings, ThemeSettings } from '@/types';
 
 // Users
 export function useUsers(params: PaginationParams = {}) {
@@ -61,6 +61,17 @@ export function useDeleteUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+// Dashboard
+export function useDashboardStats() {
+  return useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiResponse<DashboardStats>>('/dashboard/stats');
+      return data;
     },
   });
 }

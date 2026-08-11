@@ -85,6 +85,15 @@ export interface Event {
   price?: number;
 }
 
+export interface MenuCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  displayOrder: number;
+  isActive: boolean;
+}
+
 export interface MenuItem {
   _id: string;
   name: string;
@@ -109,4 +118,63 @@ export interface Testimonial {
   rating: number;
   comment: string;
   featured: boolean;
+}
+
+export interface BookingPayload {
+  customerId?: string;
+  guestDetails: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    country?: string;
+    specialRequests?: string;
+  };
+  checkIn: string;
+  checkOut: string;
+  rooms: Array<{
+    roomId: string;
+    roomType: string;
+    quantity: number;
+  }>;
+  source?: string;
+}
+
+export interface BookingResult {
+  _id: string;
+  bookingReference: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  paymentStatus: string;
+  rooms: Array<{
+    roomId: string;
+    roomType: string;
+    quantity: number;
+    price: number;
+  }>;
+  pricing: {
+    subtotal: number;
+    tax: number;
+    discount: number;
+    total: number;
+  };
+  guestDetails: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    specialRequests?: string;
+  };
+  customerId?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface AvailabilityResult {
+  available: boolean;
+  message: string;
 }

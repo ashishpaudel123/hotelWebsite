@@ -1,7 +1,7 @@
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
+import crypto from 'crypto';
 import { User, IUser } from '../../../models/User';
 import { Role, IRole } from '../../../models/Role';
-import { Permission } from '../../../models/Permission';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('AuthRepository');
@@ -19,6 +19,7 @@ export class AuthRepository {
     try {
       return await this.userModel
         .findOne({ email, isDeleted: false })
+        .select('+password')
         .populate('role', 'name slug permissions')
         .exec();
     } catch (error) {
@@ -149,7 +150,6 @@ export class AuthRepository {
 
   async createPasswordResetToken(userId: string): Promise<string> {
     try {
-      const crypto = require('crypto');
       const resetToken = crypto.randomBytes(32).toString('hex');
       
       const hashedToken = crypto
@@ -173,7 +173,6 @@ export class AuthRepository {
 
   async findUserByResetToken(token: string): Promise<IUser | null> {
     try {
-      const crypto = require('crypto');
       const hashedToken = crypto
         .createHash('sha256')
         .update(token)

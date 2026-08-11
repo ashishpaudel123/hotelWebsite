@@ -2,36 +2,41 @@
 
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarCheck, BedDouble, DollarSign, Users } from 'lucide-react';
+import { CalendarCheck, BedDouble, DollarSign, Users, Loader2 } from 'lucide-react';
+import { useDashboardStats } from '@/hooks/useApi';
 
-const stats = [
-  {
-    title: 'Active Bookings',
-    value: '45',
-    icon: CalendarCheck,
-    change: '+12% from last month',
-  },
-  {
-    title: 'Occupancy Rate',
-    value: '78.5%',
-    icon: BedDouble,
-    change: '+5.2% from last month',
-  },
-  {
-    title: 'Revenue (MTD)',
-    value: '$15,400',
-    icon: DollarSign,
-    change: '+18% from last month',
-  },
-  {
-    title: 'Total Guests',
-    value: '312',
-    icon: Users,
-    change: '+24% from last month',
-  },
+const statsConfig = [
+  { title: 'Active Bookings', key: 'totalBookings', icon: CalendarCheck, suffix: '' },
+  { title: 'Total Rooms', key: 'totalRooms', icon: BedDouble, suffix: '' },
+  { title: 'Revenue (MTD)', key: 'revenue', icon: DollarSign, prefix: '$', suffix: '' },
+  { title: 'Total Guests', key: 'totalUsers', icon: Users, suffix: '' },
 ];
 
 export default function DashboardPage() {
+  const { data, isLoading, error } = useDashboardStats();
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64 text-red-500">
+          Failed to load dashboard data
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const stats = data?.data;
+
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -41,15 +46,21 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
+          {statsConfig.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.change}</p>
+                <div className="text-2xl font-bold">
+                  {stat.prefix || ''}
+                  {String(stats?.[stat.key as keyof typeof stats]?.toLocaleString?.() ?? stats?.[stat.key as keyof typeof stats] ?? 0)}
+                  {stat.suffix || ''}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.key === 'revenue' ? 'Total revenue' : `Total ${stat.title.toLowerCase()}`}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -58,11 +69,22 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
+              <CardTitle>Occupancy Overview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Revenue chart placeholder - integrate with Recharts
+                {stats?.occupancy ? (
+                  <div className="w-full space-y-2">
+                    {Object.entries(stats.occupancy).map(([status, count]) => (
+                      <div key={status} className="flex items-center justify-between">
+                        <span className="capitalize">{status}</span>
+                        <span className="font-bold">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  'No occupancy data available'
+                )}
               </div>
             </CardContent>
           </Card>
@@ -72,15 +94,21 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0">
-                    <div>
-                      <p className="font-medium">Booking #{2023000 + i}</p>
-                      <p className="text-sm text-muted-foreground">Check-in: Nov {i}, 2023</p>
+                {stats?.recentBookings?.length ? (
+                  stats.recentBookings.map((booking) => (
+                    <div key={booking._id} className="flex items-center justify-between border-b pb-4 last:border-0">
+                      <div>
+                        <p className="font-medium">{booking.bookingReference}</p>
+                        <p className="text-sm text-muted-foreground">{booking.customer}</p>
+                      </div>
+                      <span className="text-sm font-medium text-green-600 capitalize">
+                        {booking.status.replace('_', ' ')}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-green-600">Confirmed</span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No recent bookings</p>
+                )}
               </div>
             </CardContent>
           </Card>

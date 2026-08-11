@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { WebsiteSettings } from '@/types';
+import HeaderAuth from './HeaderAuth';
 
 async function getWebsiteSettings(): Promise<WebsiteSettings | null> {
   try {
@@ -68,10 +69,8 @@ export default async function Header() {
           </Link>
         </nav>
 
-        {/* CTA Button */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Button size="sm">Book Now</Button>
-        </div>
+         {/* CTA Button */}
+         <HeaderAuth />
 
         {/* Mobile Menu Button */}
         <button className="md:hidden p-2" aria-label="Toggle menu">

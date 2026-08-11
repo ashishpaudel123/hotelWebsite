@@ -1,22 +1,48 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { authRoutes } from './modules/auth';
+import { roomRoutes } from './modules/room';
+import { websiteRoutes } from './modules/website';
+import { cmsRoutes } from './modules/cms';
+import { bookingRoutes } from './modules/booking';
+import { couponRoutes } from './modules/coupon';
+import { userRoutes } from './modules/user';
+import { dashboardRoutes } from './modules/dashboard';
+import { paymentRoutes } from './modules/payment';
 import { errorHandler } from './utils/errors';
-import { apiLimiter } from './middleware/rateLimit.middleware';
+import { apiLimiter, authLimiter } from './middleware/rateLimit.middleware';
 import { Logger } from './utils/logger';
 import { connectDatabase } from './config/database';
 
+import './models/User';
+import './models/Role';
+import './models/Permission';
+import './models/RoomType';
+import './models/Room';
+import './models/WebsiteSettings';
+import './models/HomepageSection';
+import './models/Blog';
+import './models/Event';
+import './models/MenuCategory';
+import './models/MenuItem';
+import './models/GalleryImage';
+import './models/Testimonial';
+import './models/Booking';
+import './models/Payment';
+import './models/Coupon';
+
 const logger = new Logger('Server');
 
-const app: Application = express();
+export const app: Application = express();
 
-// Security middleware
 app.use(helmet());
 
-// CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
@@ -24,14 +50,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Compression middleware
 app.use(compression());
 
-// Logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
@@ -42,11 +65,9 @@ if (process.env.NODE_ENV === 'development') {
   }));
 }
 
-// Rate limiting
 app.use('/api', apiLimiter);
 
-// Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Server is healthy',
@@ -55,11 +76,17 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// API Routes
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', authLimiter, authRoutes);
+app.use('/api/v1/rooms', roomRoutes);
+app.use('/api/v1/website', websiteRoutes);
+app.use('/api/v1/cms', cmsRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
-// Root endpoint
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'Hotel Management & Booking System API',
@@ -69,7 +96,6 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -81,42 +107,35 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Global error handler
 app.use(errorHandler);
 
-// Database connection and server start
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-  try {
-    // Connect to database
-    await connectDatabase();
+export const startServer = async (): Promise<void> => {
+  await connectDatabase();
 
-    // Start server
-    app.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`, {
-        env: process.env.NODE_ENV,
-        port: PORT,
-      });
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`, {
+      env: process.env.NODE_ENV,
+      port: PORT,
     });
-  } catch (error) {
-    logger.error('Failed to start server', { error });
-    process.exit(1);
-  }
+  });
+
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
 };
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   logger.error('Unhandled Rejection at:', { promise, reason });
-  process.exit(1);
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error: any) => {
   logger.error('Uncaught Exception:', { error });
-  process.exit(1);
 });
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
 
 export default app;

@@ -19,11 +19,11 @@ export default function BookingsPage() {
       cell: ({ row }) => <span className="font-medium">{row.getValue('bookingReference')}</span>,
     },
     {
-      accessorKey: 'customerId.name',
+      accessorKey: 'customerId',
       header: 'Guest',
       cell: ({ row }) => (
         <div>
-          <p className="font-medium">{row.original.customerId?.name}</p>
+          <p className="font-medium">{row.original.customerId?.firstName} {row.original.customerId?.lastName}</p>
           <p className="text-sm text-muted-foreground">{row.original.customerId?.email}</p>
         </div>
       ),

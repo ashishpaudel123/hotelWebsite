@@ -1,12 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Users, Wifi, Coffee, Car, ArrowLeft } from 'lucide-react';
+import { Wifi, ArrowLeft } from 'lucide-react';
 import { getRoomBySlug, getRooms } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/utils';
+import BookingForm from '@/components/booking/BookingForm';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -14,11 +12,11 @@ interface PageProps {
 
 export async function generateStaticParams() {
   try {
-    const roomsData = await getRooms();
-    const rooms = roomsData?.data || [];
-    return rooms.map((room: any) => ({
-      slug: room.roomType?.slug || room._id,
-    }));
+    const rooms = await getRooms();
+    const slugs = rooms
+      .filter((room) => room.roomType?.slug)
+      .map((room) => room.roomType!.slug);
+    return [...new Set(slugs)].map((slug) => ({ slug }));
   } catch (error) {
     console.error('Failed to generate static params:', error);
     return [];
@@ -33,7 +31,7 @@ export async function generateMetadata({ params }: PageProps) {
       title: room.roomType?.name || 'Room Details',
       description: room.roomType?.description || 'Luxury room details',
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Room Not Found',
     };
@@ -133,33 +131,7 @@ export default async function RoomDetailPage({ params }: PageProps) {
 
         {/* Booking Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <span className="text-3xl font-bold text-primary">
-                  {formatCurrency(room.roomType?.basePrice || 0)}
-                </span>
-                <span className="text-muted-foreground"> /night</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>Max {room.roomType?.maxOccupancy || 2} guests</span>
-              </div>
-
-              <Button size="lg" className="w-full">
-                Book Now
-              </Button>
-              
-              <Button variant="outline" size="lg" className="w-full">
-                Check Availability
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Best price guaranteed • Free cancellation
-              </p>
-            </CardContent>
-          </Card>
+          <BookingForm room={room} />
         </div>
       </div>
     </div>

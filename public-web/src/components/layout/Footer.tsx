@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Linkedin, Youtube } from 'lucide-react';
-import { getWebsiteSettings, getFooter } from '@/lib/api';
+import { getWebsiteSettings } from '@/lib/api';
 
 const socialIcons = {
   facebook: Facebook,

@@ -2,9 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getHomepageSections, getWebsiteSettings } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { HomepageSection } from '@/types';
 
 export default async function HomePage() {
-  let sections;
+  let sections: HomepageSection[] = [];
   let settings;
   
   try {
@@ -104,7 +105,7 @@ export default async function HomePage() {
                 <div className="grid md:grid-cols-3 gap-8 mt-12">
                   {/* Testimonial cards would be mapped here */}
                   <div className="p-6 bg-card rounded-lg shadow">
-                    <p className="italic mb-4">"Amazing experience!"</p>
+                     <p className="italic mb-4">&quot;Amazing experience!&quot;</p>
                     <p className="font-semibold">- Happy Guest</p>
                   </div>
                 </div>

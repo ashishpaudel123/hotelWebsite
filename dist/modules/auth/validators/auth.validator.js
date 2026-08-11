@@ -1,0 +1,26 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.refreshTokenSchema = exports.registerSchema = exports.loginSchema = void 0;
+const zod_1 = require("zod");
+exports.loginSchema = zod_1.z.object({
+    email: zod_1.z.string().email('Invalid email format'),
+    password: zod_1.z.string().min(8, 'Password must be at least 8 characters'),
+});
+exports.registerSchema = zod_1.z.object({
+    firstName: zod_1.z.string().min(2, 'First name must be at least 2 characters'),
+    lastName: zod_1.z.string().min(2, 'Last name must be at least 2 characters'),
+    email: zod_1.z.string().email('Invalid email format'),
+    password: zod_1.z.string().min(8, 'Password must be at least 8 characters'),
+    phone: zod_1.z.string().optional(),
+});
+exports.refreshTokenSchema = zod_1.z.object({
+    refreshToken: zod_1.z.string().min(1, 'Refresh token is required'),
+});
+exports.forgotPasswordSchema = zod_1.z.object({
+    email: zod_1.z.string().email('Invalid email format'),
+});
+exports.resetPasswordSchema = zod_1.z.object({
+    token: zod_1.z.string().min(1, 'Token is required'),
+    newPassword: zod_1.z.string().min(8, 'New password must be at least 8 characters'),
+});
+//# sourceMappingURL=auth.validator.js.map

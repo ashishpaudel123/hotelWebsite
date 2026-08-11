@@ -1,34 +1,25 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Users, Wifi, Coffee, Car } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { getRooms } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
+import { Room } from '@/types';
 
 export const metadata = {
   title: 'Rooms & Suites',
   description: 'Explore our luxurious rooms and suites',
 };
 
-const amenitiesIcons: Record<string, any> = {
-  wifi: Wifi,
-  breakfast: Coffee,
-  parking: Car,
-  guests: Users,
-};
-
 export default async function RoomsPage() {
-  let roomsData;
+  let rooms: Room[] = [];
   try {
-    roomsData = await getRooms({ status: 'available' });
+    rooms = await getRooms({ status: 'available' });
   } catch (error) {
     console.error('Failed to fetch rooms:', error);
-    roomsData = { data: [] };
   }
-
-  const rooms = roomsData?.data || [];
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -55,7 +46,7 @@ export default async function RoomsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {rooms.map((room: any) => (
+          {rooms.map((room) => (
             <Card key={room._id} className="overflow-hidden group hover:shadow-lg transition-shadow">
               <div className="relative h-64 overflow-hidden">
                 <Image

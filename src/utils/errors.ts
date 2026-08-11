@@ -17,10 +17,24 @@ export class AppError extends Error {
 
 export const errorHandler = (
   err: Error | AppError,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
+  // Handle validation errors thrown as plain objects
+  const anyErr = err as any;
+  if (anyErr.status && anyErr.code && anyErr.message) {
+    return res.status(anyErr.status).json({
+      success: false,
+      error: {
+        code: anyErr.code,
+        message: anyErr.message,
+        ...(anyErr.details && { details: anyErr.details }),
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   // If it's our custom AppError
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({

@@ -12,15 +12,13 @@ interface JwtPayload {
   permissions: string[];
 }
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
+declare module 'express' {
+  interface Request {
+    user?: JwtPayload;
   }
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -29,7 +27,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     }
 
     const token = authHeader.split(' ')[1];
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    const JWT_SECRET = process.env.JWT_SECRET;
+
+    if (!JWT_SECRET) {
+      logger.error('JWT_SECRET is not configured');
+      return next(new AppError('Server configuration error', 500, 'SYS_002'));
+    }
 
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     req.user = decoded;
@@ -51,7 +54,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 };
 
 export const authorize = (...permissions: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401, 'AUTH_008');
@@ -91,7 +94,7 @@ export const authorize = (...permissions: string[]) => {
 };
 
 export const checkRole = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401, 'AUTH_008');
@@ -113,20 +116,24 @@ export const checkRole = (...roles: string[]) => {
   };
 };
 
-export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+      const JWT_SECRET = process.env.JWT_SECRET;
 
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-        req.user = decoded;
-        logger.debug('Optional auth: User authenticated', { userId: decoded.sub });
-      } catch (error) {
-        logger.debug('Optional auth: Invalid token, continuing as guest');
+      if (!JWT_SECRET) {
+        logger.error('JWT_SECRET is not configured');
+      } else {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+          req.user = decoded;
+          logger.debug('Optional auth: User authenticated', { userId: decoded.sub });
+        } catch (error) {
+          logger.debug('Optional auth: Invalid token, continuing as guest');
+        }
       }
     }
 

@@ -17,8 +17,8 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from '@/components/ui/table';
+import { TableRow } from '@/components/ui/table-row';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';

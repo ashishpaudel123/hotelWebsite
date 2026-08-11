@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+import { WebsiteSettings, ThemeSettings, HomepageSection, Room, BlogPost, Event, MenuItem, MenuCategory, GalleryImage, Testimonial, SEO, BookingPayload, BookingResult, AvailabilityResult } from '@/types';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 
 interface FetchOptions extends RequestInit {
   revalidate?: number | false;
@@ -38,31 +40,47 @@ export const api = {
   // Rooms
   getRooms: (filters?: Record<string, string>) => {
     const params = new URLSearchParams(filters).toString();
-    return fetchAPI<{ rooms: Room[]; meta: any }>(`/rooms?${params}`);
+    return fetchAPI<Room[]>(`/rooms?${params}`);
   },
   getRoomBySlug: (slug: string) => fetchAPI<Room>(`/rooms/slug/${slug}`),
   
   // Content
   getBlogPosts: (filters?: Record<string, string>) => {
     const params = new URLSearchParams(filters).toString();
-    return fetchAPI<{ posts: BlogPost[]; meta: any }>(`/blogs?${params}`);
+    return fetchAPI<BlogPost[]>(`/blogs?${params}`);
   },
   getEvents: (filters?: Record<string, string>) => {
     const params = new URLSearchParams(filters).toString();
-    return fetchAPI<{ events: Event[] }>(`/events?${params}`);
+    return fetchAPI<Event[]>(`/events?${params}`);
   },
   getMenuItems: (categoryId?: string) => {
     const params = categoryId ? `?category=${categoryId}` : '';
-    return fetchAPI<{ items: MenuItem[] }>(`/menu-items${params}`);
+    return fetchAPI<MenuItem[]>(`/menu-items${params}`);
   },
   getGallery: (category?: string) => {
     const params = category ? `?category=${category}` : '';
-    return fetchAPI<{ images: GalleryImage[] }>(`/gallery${params}`);
+    return fetchAPI<GalleryImage[]>(`/gallery${params}`);
   },
-  getTestimonials: () => fetchAPI<{ testimonials: Testimonial[] }>('/testimonials'),
+  getTestimonials: () => fetchAPI<Testimonial[]>('/testimonials'),
   
   // SEO
   getPageSEO: (slug: string) => fetchAPI<SEO>(`/seo/pages/${slug}`),
+
+  // Bookings
+  checkAvailability: (payload: { roomId: string; checkIn: string; checkOut: string; quantity?: number }) =>
+    fetchAPI<AvailabilityResult>('/bookings/check-availability', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  createBooking: (payload: BookingPayload) =>
+    fetchAPI<BookingResult>('/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  getBookingByReference: (reference: string) =>
+    fetchAPI<BookingResult>(`/bookings/reference/${reference}`),
 };
 
 // Re-export types for convenience

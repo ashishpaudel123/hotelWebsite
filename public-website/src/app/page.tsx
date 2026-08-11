@@ -14,8 +14,8 @@ async function getHomepageSections() {
 
 async function getFeaturedRooms() {
   try {
-    const data = await api.getRooms({ limit: '3', status: 'available' });
-    return data.rooms || [];
+    const rooms = await api.getRooms({ limit: '3', status: 'available' });
+    return rooms || [];
   } catch {
     return [];
   }
@@ -82,7 +82,7 @@ export default async function HomePage() {
               />
               {section.media && section.media.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-                  {section.media.map((image, index) => (
+                  {section.media.map((image: string, index: number) => (
                     <Image
                       key={index}
                       src={image}
