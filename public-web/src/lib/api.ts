@@ -1,3 +1,15 @@
+import type {
+  WebsiteSettings,
+  ThemeSettings,
+  HomepageSection,
+  Room,
+  BlogPost,
+  Event,
+  MenuItem,
+  GalleryImage,
+  Testimonial,
+} from '@/types';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 // Cache tags for revalidation
@@ -25,10 +37,7 @@ async function fetchAPI<T>(
       'Content-Type': 'application/json',
       ...options?.headers,
     },
-    next: {
-      tags: cacheTags,
-      revalidate: 3600, // 1 hour default revalidation
-    },
+    cache: 'no-store',
   });
 
   if (!response.ok) {

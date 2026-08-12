@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getHomepageSections, getWebsiteSettings } from '@/lib/api';
+import { HomepageSection } from '@/types';
 import { Button } from '@/components/ui/button';
 
 export default async function HomePage() {
-  let sections;
+  let sections: HomepageSection[] = [];
   let settings;
   
   try {

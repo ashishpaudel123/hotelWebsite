@@ -12,6 +12,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "db:seed": "ts-node src/scripts/seed.ts",
+    "db:seed:cms": "ts-node src/scripts/seedCms.ts",
     "db:migrate": "ts-node src/scripts/migrate.ts"
   },
   "keywords": [

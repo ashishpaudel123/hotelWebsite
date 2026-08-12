@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { authRoutes } from './modules/auth';
+import { cmsRoutes } from './modules/cms';
+import { roomRoutes } from './modules/rooms';
 import { errorHandler } from './utils/errors';
 import { apiLimiter } from './middleware/rateLimit.middleware';
 import { Logger } from './utils/logger';
@@ -58,6 +60,8 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', cmsRoutes);
+app.use('/api/v1', roomRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
