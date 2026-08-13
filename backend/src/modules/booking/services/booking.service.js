@@ -1,11 +1,15 @@
-const bookingRepository = require('./repositories/booking.repository');
-const paymentService = require('../payment/services/payment.service');
-const notificationService = require('../notification/services/email.service');
-const smsService = require('../notification/services/sms.service');
-const Coupon = require('../../models/Coupon');
-const RoomType = require('../../models/RoomType');
-const logger = require('../../utils/logger');
-const { CreateBookingDTO, CancelBookingDTO, UpdateBookingStatusDTO } = require('./dtos/booking.dto');
+const bookingRepository = require("../repositories/booking.repository");
+const paymentService = require("../../payment/services/payment.service");
+const notificationService = require("../../notification/services/email.service");
+const smsService = require("../../notification/services/sms.service");
+const Coupon = require("../../../models/Coupon");
+const RoomType = require("../../../models/RoomType");
+const logger = require("../../../utils/logger");
+const {
+  CreateBookingDTO,
+  CancelBookingDTO,
+  UpdateBookingStatusDTO,
+} = require("../dtos/booking.dto");
 
 class BookingService {
   /**
@@ -28,11 +32,13 @@ class BookingService {
             room.roomTypeId,
             bookingData.checkIn,
             bookingData.checkOut,
-            room.quantity
+            room.quantity,
           );
 
           if (!availability.available) {
-            throw new Error(`Room type ${room.roomTypeId}: ${availability.message}`);
+            throw new Error(
+              `Room type ${room.roomTypeId}: ${availability.message}`,
+            );
           }
         }
 
@@ -41,10 +47,15 @@ class BookingService {
 
         // Apply coupon if provided
         if (bookingData.couponCode) {
-          const coupon = await this.validateAndApplyCoupon(bookingData.couponCode, pricing.subtotal, bookingData.rooms);
+          const coupon = await this.validateAndApplyCoupon(
+            bookingData.couponCode,
+            pricing.subtotal,
+            bookingData.rooms,
+          );
           pricing.discount = coupon.discountAmount;
           pricing.couponCode = coupon.code;
-          pricing.total = pricing.subtotal + pricing.tax - coupon.discountAmount;
+          pricing.total =
+            pricing.subtotal + pricing.tax - coupon.discountAmount;
         }
 
         // Create booking
@@ -53,13 +64,16 @@ class BookingService {
           guestDetails: bookingData.guestDetails,
           checkIn: new Date(bookingData.checkIn),
           checkOut: new Date(bookingData.checkOut),
-          rooms: bookingData.rooms.map(room => ({
+          rooms: bookingData.rooms.map((room) => ({
             ...room,
-            totalNights: this.calculateNights(bookingData.checkIn, bookingData.checkOut)
+            totalNights: this.calculateNights(
+              bookingData.checkIn,
+              bookingData.checkOut,
+            ),
           })),
           pricing,
           source: bookingData.source,
-          metadata: bookingData.metadata
+          metadata: bookingData.metadata,
         });
 
         await session.commitTransaction();
@@ -69,7 +83,6 @@ class BookingService {
 
         logger.info(`Booking created: ${booking.bookingReference}`);
         return booking;
-
       } catch (error) {
         await session.abortTransaction();
         throw error;
@@ -77,7 +90,7 @@ class BookingService {
         session.endSession();
       }
     } catch (error) {
-      logger.error('Error creating booking:', error);
+      logger.error("Error creating booking:", error);
       throw error;
     }
   }
@@ -87,7 +100,10 @@ class BookingService {
    */
   async calculatePricing(bookingData) {
     let subtotal = 0;
-    const nights = this.calculateNights(bookingData.checkIn, bookingData.checkOut);
+    const nights = this.calculateNights(
+      bookingData.checkIn,
+      bookingData.checkOut,
+    );
 
     for (const room of bookingData.rooms) {
       const roomType = await RoomType.findById(room.roomTypeId);
@@ -103,7 +119,7 @@ class BookingService {
       tax,
       discount: 0,
       total: subtotal + tax,
-      currency: 'NPR'
+      currency: "NPR",
     };
   }
 
@@ -112,43 +128,50 @@ class BookingService {
    */
   calculateNights(checkIn, checkOut) {
     const oneDay = 24 * 60 * 60 * 1000;
-    return Math.round(Math.abs((new Date(checkOut) - new Date(checkIn)) / oneDay));
+    return Math.round(
+      Math.abs((new Date(checkOut) - new Date(checkIn)) / oneDay),
+    );
   }
 
   /**
    * Validate and apply coupon
    */
   async validateAndApplyCoupon(code, subtotal, rooms) {
-    const coupon = await Coupon.findOne({ 
+    const coupon = await Coupon.findOne({
       code: code.toUpperCase(),
-      status: 'active'
+      status: "active",
     });
 
     if (!coupon) {
-      throw new Error('Invalid coupon code');
+      throw new Error("Invalid coupon code");
     }
 
     // Check validity dates
     const now = new Date();
     if (now < coupon.validFrom || now > coupon.validTo) {
-      throw new Error('Coupon is not valid for the selected dates');
+      throw new Error("Coupon is not valid for the selected dates");
     }
 
     // Check usage limits
     if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
-      throw new Error('Coupon usage limit reached');
+      throw new Error("Coupon usage limit reached");
     }
 
     // Check minimum booking amount
     if (subtotal < coupon.minBookingAmount) {
-      throw new Error(`Minimum booking amount of NPR ${coupon.minBookingAmount} required`);
+      throw new Error(
+        `Minimum booking amount of NPR ${coupon.minBookingAmount} required`,
+      );
     }
 
     // Calculate discount
     let discountAmount = 0;
-    if (coupon.discountType === 'percentage') {
+    if (coupon.discountType === "percentage") {
       discountAmount = (subtotal * coupon.discountValue) / 100;
-      if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
+      if (
+        coupon.maxDiscountAmount &&
+        discountAmount > coupon.maxDiscountAmount
+      ) {
         discountAmount = coupon.maxDiscountAmount;
       }
     } else {
@@ -161,7 +184,7 @@ class BookingService {
     return {
       code: coupon.code,
       discountAmount,
-      description: coupon.description
+      description: coupon.description,
     };
   }
 
@@ -169,7 +192,12 @@ class BookingService {
    * Check room availability
    */
   async checkAvailability(checkIn, checkOut, roomTypeId, quantity) {
-    return await bookingRepository.checkAvailability(roomTypeId, checkIn, checkOut, quantity);
+    return await bookingRepository.checkAvailability(
+      roomTypeId,
+      checkIn,
+      checkOut,
+      quantity,
+    );
   }
 
   /**
@@ -178,7 +206,7 @@ class BookingService {
   async getBooking(id) {
     const booking = await bookingRepository.findById(id);
     if (!booking) {
-      throw new Error('Booking not found');
+      throw new Error("Booking not found");
     }
     return booking;
   }
@@ -189,7 +217,7 @@ class BookingService {
   async getBookingByReference(reference) {
     const booking = await bookingRepository.findByReference(reference);
     if (!booking) {
-      throw new Error('Booking not found');
+      throw new Error("Booking not found");
     }
     return booking;
   }
@@ -205,15 +233,25 @@ class BookingService {
    * Update booking status
    */
   async updateStatus(bookingId, status, reason, user) {
-    const dto = new UpdateBookingStatusDTO({ bookingId, status, reason, updatedBy: user._id });
+    const dto = new UpdateBookingStatusDTO({
+      bookingId,
+      status,
+      reason,
+      updatedBy: user._id,
+    });
     dto.validate();
 
-    const booking = await bookingRepository.updateStatus(bookingId, status, reason, user._id);
-    
+    const booking = await bookingRepository.updateStatus(
+      bookingId,
+      status,
+      reason,
+      user._id,
+    );
+
     // Send notification on status change
-    if (status === 'confirmed') {
+    if (status === "confirmed") {
       await this.sendBookingConfirmation(booking);
-    } else if (status === 'cancelled') {
+    } else if (status === "cancelled") {
       await this.sendBookingCancellation(booking, reason);
     }
 
@@ -225,14 +263,18 @@ class BookingService {
    */
   async cancelBooking(bookingId, reason, user) {
     const booking = await this.getBooking(bookingId);
-    
+
     // Calculate refund based on cancellation policy
     const refundAmount = this.calculateRefund(booking);
-    
-    const cancelledBooking = await bookingRepository.cancel(bookingId, reason, refundAmount);
-    
+
+    const cancelledBooking = await bookingRepository.cancel(
+      bookingId,
+      reason,
+      refundAmount,
+    );
+
     // Process refund if payment was made
-    if (booking.paymentStatus === 'paid' && refundAmount > 0) {
+    if (booking.paymentStatus === "paid" && refundAmount > 0) {
       await paymentService.processRefund(bookingId, refundAmount, reason, user);
     }
 
@@ -251,7 +293,7 @@ class BookingService {
     const daysBeforeCheckIn = (checkIn - now) / (1000 * 60 * 60 * 24);
 
     let refundPercentage = 0;
-    
+
     if (daysBeforeCheckIn > 7) {
       refundPercentage = 100; // Full refund
     } else if (daysBeforeCheckIn > 3) {
@@ -273,18 +315,18 @@ class BookingService {
       // Email
       await notificationService.sendBookingConfirmation({
         to: booking.guestDetails.email,
-        booking: booking
+        booking: booking,
       });
 
       // SMS
       await smsService.sendSMS({
         to: booking.guestDetails.phone,
-        message: `Booking Confirmed! Ref: ${booking.bookingReference}. Check-in: ${new Date(booking.checkIn).toLocaleDateString()}. Total: NPR ${booking.pricing.total}`
+        message: `Booking Confirmed! Ref: ${booking.bookingReference}. Check-in: ${new Date(booking.checkIn).toLocaleDateString()}. Total: NPR ${booking.pricing.total}`,
       });
 
       logger.info(`Confirmation sent for booking: ${booking.bookingReference}`);
     } catch (error) {
-      logger.error('Error sending booking confirmation:', error);
+      logger.error("Error sending booking confirmation:", error);
       // Don't throw - booking is still valid even if notification fails
     }
   }
@@ -297,12 +339,14 @@ class BookingService {
       await notificationService.sendBookingCancellation({
         to: booking.guestDetails.email,
         booking: booking,
-        reason: reason
+        reason: reason,
       });
 
-      logger.info(`Cancellation notification sent for booking: ${booking.bookingReference}`);
+      logger.info(
+        `Cancellation notification sent for booking: ${booking.bookingReference}`,
+      );
     } catch (error) {
-      logger.error('Error sending cancellation notification:', error);
+      logger.error("Error sending cancellation notification:", error);
     }
   }
 

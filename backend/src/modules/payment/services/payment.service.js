@@ -1,9 +1,9 @@
-const crypto = require('crypto');
-const axios = require('axios');
-const Payment = require('../../models/Payment');
-const Booking = require('../../models/Booking');
-const logger = require('../../utils/logger');
-const paymentConfig = require('../../config/payment.config');
+const crypto = require("crypto");
+const axios = require("../../../utils/axios");
+const Payment = require("../../../models/Payment");
+const Booking = require("../../../models/Booking");
+const logger = require("../../../utils/logger");
+const paymentConfig = require("../../../config/payment.config");
 
 class PaymentService {
   /**
@@ -19,33 +19,33 @@ class PaymentService {
   async initESewaPayment(bookingId, amount) {
     try {
       const booking = await Booking.findById(bookingId);
-      if (!booking) throw new Error('Booking not found');
+      if (!booking) throw new Error("Booking not found");
 
       const transactionId = this.generateTransactionId();
-      
+
       // eSewa parameters
       const params = {
         amt: amount.toString(),
-        psc: '0',
-        pdc: '0',
-        txAmt: '0',
+        psc: "0",
+        pdc: "0",
+        txAmt: "0",
         tAmt: amount.toString(),
         pid: transactionId,
         scd: paymentConfig.esewa.merchantCode,
         su: paymentConfig.esewa.successUrl,
-        fu: paymentConfig.esewa.failureUrl
+        fu: paymentConfig.esewa.failureUrl,
       };
 
       // Generate signature
       const signatureData = Object.keys(params)
         .sort()
-        .map(key => `${key}=${params[key]}`)
-        .join('&');
-      
+        .map((key) => `${key}=${params[key]}`)
+        .join("&");
+
       const signature = crypto
-        .createHash('md5')
+        .createHash("md5")
         .update(signatureData + paymentConfig.esewa.secretKey)
-        .digest('base64');
+        .digest("base64");
 
       params.signature = signature;
 
@@ -53,14 +53,14 @@ class PaymentService {
       await Payment.create({
         bookingId,
         transactionId,
-        provider: 'esewa',
+        provider: "esewa",
         amount,
-        currency: 'NPR',
-        status: 'pending',
+        currency: "NPR",
+        status: "pending",
         metadata: {
-          ipAddress: '', // Will be filled from request
-          userAgent: ''
-        }
+          ipAddress: "", // Will be filled from request
+          userAgent: "",
+        },
       });
 
       logger.info(`eSewa payment initiated: ${transactionId}`);
@@ -68,10 +68,10 @@ class PaymentService {
       return {
         paymentUrl: paymentConfig.esewa.paymentUrl,
         params,
-        transactionId
+        transactionId,
       };
     } catch (error) {
-      logger.error('Error initializing eSewa payment:', error);
+      logger.error("Error initializing eSewa payment:", error);
       throw error;
     }
   }
@@ -82,7 +82,7 @@ class PaymentService {
   async initKhaltiPayment(bookingId, amount) {
     try {
       const booking = await Booking.findById(bookingId);
-      if (!booking) throw new Error('Booking not found');
+      if (!booking) throw new Error("Booking not found");
 
       const transactionId = this.generateTransactionId();
 
@@ -96,8 +96,8 @@ class PaymentService {
         customer_info: {
           name: `${booking.guestDetails.firstName} ${booking.guestDetails.lastName}`,
           email: booking.guestDetails.email,
-          phone: booking.guestDetails.phone
-        }
+          phone: booking.guestDetails.phone,
+        },
       };
 
       // Make request to Khalti API
@@ -106,10 +106,10 @@ class PaymentService {
         payload,
         {
           headers: {
-            'Authorization': `Key ${paymentConfig.khalti.secretKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            Authorization: `Key ${paymentConfig.khalti.secretKey}`,
+            "Content-Type": "application/json",
+          },
+        },
       );
 
       if (response.data.error) {
@@ -120,18 +120,18 @@ class PaymentService {
       await Payment.create({
         bookingId,
         transactionId,
-        provider: 'khalti',
+        provider: "khalti",
         amount,
-        currency: 'NPR',
-        status: 'pending',
+        currency: "NPR",
+        status: "pending",
         gatewayResponse: {
           pidx: response.data.pidx,
-          checkoutUrl: response.data.checkout_url
+          checkoutUrl: response.data.checkout_url,
         },
         metadata: {
-          ipAddress: '',
-          userAgent: ''
-        }
+          ipAddress: "",
+          userAgent: "",
+        },
       });
 
       logger.info(`Khalti payment initiated: ${transactionId}`);
@@ -139,10 +139,10 @@ class PaymentService {
       return {
         checkoutUrl: response.data.checkout_url,
         pidx: response.data.pidx,
-        transactionId
+        transactionId,
       };
     } catch (error) {
-      logger.error('Error initializing Khalti payment:', error);
+      logger.error("Error initializing Khalti payment:", error);
       throw error;
     }
   }
@@ -152,23 +152,26 @@ class PaymentService {
    */
   async verifyESewaPayment(transactionId, data) {
     try {
-      const payment = await Payment.findOne({ transactionId, provider: 'esewa' });
-      if (!payment) throw new Error('Payment not found');
+      const payment = await Payment.findOne({
+        transactionId,
+        provider: "esewa",
+      });
+      if (!payment) throw new Error("Payment not found");
 
       // Verify signature
       const signatureData = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
       const expectedSignature = crypto
-        .createHash('sha256')
+        .createHash("sha256")
         .update(signatureData + paymentConfig.esewa.secretKey)
-        .digest('base64');
+        .digest("base64");
 
       if (data.signature !== expectedSignature) {
-        throw new Error('Invalid signature');
+        throw new Error("Invalid signature");
       }
 
       // Update payment status
-      const status = data.status === 'COMPLETE' ? 'success' : 'failed';
-      
+      const status = data.status === "COMPLETE" ? "success" : "failed";
+
       await Payment.findOneAndUpdate(
         { transactionId },
         {
@@ -177,25 +180,27 @@ class PaymentService {
             statusCode: data.status,
             message: data.status_message,
             transactionCode: data.transaction_code,
-            rawResponse: data
+            rawResponse: data,
           },
-          paymentMethod: 'mobile_banking'
-        }
+          paymentMethod: "mobile_banking",
+        },
       );
 
       // Update booking status
-      if (status === 'success') {
+      if (status === "success") {
         await Booking.findByIdAndUpdate(payment.bookingId, {
-          paymentStatus: 'paid',
-          status: 'confirmed'
+          paymentStatus: "paid",
+          status: "confirmed",
         });
       }
 
-      logger.info(`eSewa payment verified: ${transactionId}, Status: ${status}`);
+      logger.info(
+        `eSewa payment verified: ${transactionId}, Status: ${status}`,
+      );
 
-      return { success: status === 'success', payment };
+      return { success: status === "success", payment };
     } catch (error) {
-      logger.error('Error verifying eSewa payment:', error);
+      logger.error("Error verifying eSewa payment:", error);
       throw error;
     }
   }
@@ -205,8 +210,11 @@ class PaymentService {
    */
   async verifyKhaltiPayment(transactionId, pidx) {
     try {
-      const payment = await Payment.findOne({ transactionId, provider: 'khalti' });
-      if (!payment) throw new Error('Payment not found');
+      const payment = await Payment.findOne({
+        transactionId,
+        provider: "khalti",
+      });
+      if (!payment) throw new Error("Payment not found");
 
       // Verify with Khalti API
       const response = await axios.post(
@@ -214,17 +222,18 @@ class PaymentService {
         { pidx },
         {
           headers: {
-            'Authorization': `Key ${paymentConfig.khalti.secretKey}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            Authorization: `Key ${paymentConfig.khalti.secretKey}`,
+            "Content-Type": "application/json",
+          },
+        },
       );
 
       if (response.data.error) {
         throw new Error(response.data.error);
       }
 
-      const status = response.data.status === 'Completed' ? 'success' : 'failed';
+      const status =
+        response.data.status === "Completed" ? "success" : "failed";
 
       await Payment.findOneAndUpdate(
         { transactionId },
@@ -234,25 +243,27 @@ class PaymentService {
             statusCode: response.data.status,
             message: response.data.message,
             transactionCode: response.data.transaction_id,
-            rawResponse: response.data
+            rawResponse: response.data,
           },
-          paymentMethod: 'wallet'
-        }
+          paymentMethod: "wallet",
+        },
       );
 
       // Update booking status
-      if (status === 'success') {
+      if (status === "success") {
         await Booking.findByIdAndUpdate(payment.bookingId, {
-          paymentStatus: 'paid',
-          status: 'confirmed'
+          paymentStatus: "paid",
+          status: "confirmed",
         });
       }
 
-      logger.info(`Khalti payment verified: ${transactionId}, Status: ${status}`);
+      logger.info(
+        `Khalti payment verified: ${transactionId}, Status: ${status}`,
+      );
 
-      return { success: status === 'success', payment };
+      return { success: status === "success", payment };
     } catch (error) {
-      logger.error('Error verifying Khalti payment:', error);
+      logger.error("Error verifying Khalti payment:", error);
       throw error;
     }
   }
@@ -263,53 +274,56 @@ class PaymentService {
   async processRefund(bookingId, amount, reason, user) {
     try {
       const booking = await Booking.findById(bookingId);
-      if (!booking) throw new Error('Booking not found');
+      if (!booking) throw new Error("Booking not found");
 
-      const payment = await Payment.findOne({ bookingId, status: 'success' });
-      if (!payment) throw new Error('No successful payment found for this booking');
+      const payment = await Payment.findOne({ bookingId, status: "success" });
+      if (!payment)
+        throw new Error("No successful payment found for this booking");
 
       const refundTransactionId = this.generateTransactionId();
 
       // Note: eSewa and Khalti have different refund processes
       // This is a simplified version - actual implementation depends on gateway APIs
-      
+
       const refundRecord = await Payment.create({
         bookingId,
         transactionId: refundTransactionId,
         provider: payment.provider,
         amount,
-        currency: 'NPR',
-        type: 'refund',
-        status: 'pending',
+        currency: "NPR",
+        type: "refund",
+        status: "pending",
         refundDetails: {
           reason,
           amount,
-          refundedAt: new Date()
+          refundedAt: new Date(),
         },
-        processedBy: user._id
+        processedBy: user._id,
       });
 
       // Update original payment
       await Payment.findByIdAndUpdate(payment._id, {
-        status: 'refunded',
+        status: "refunded",
         refundDetails: {
           reason,
           amount,
-          refundTransactionId
-        }
+          refundTransactionId,
+        },
       });
 
       // Update booking
       await Booking.findByIdAndUpdate(bookingId, {
-        paymentStatus: 'refunded',
-        status: 'cancelled'
+        paymentStatus: "refunded",
+        status: "cancelled",
       });
 
-      logger.info(`Refund processed: ${refundTransactionId} for booking ${bookingId}`);
+      logger.info(
+        `Refund processed: ${refundTransactionId} for booking ${bookingId}`,
+      );
 
       return refundRecord;
     } catch (error) {
-      logger.error('Error processing refund:', error);
+      logger.error("Error processing refund:", error);
       throw error;
     }
   }
@@ -318,11 +332,13 @@ class PaymentService {
    * Get payment by transaction ID
    */
   async getPayment(transactionId) {
-    const payment = await Payment.findOne({ transactionId })
-      .populate('bookingId', 'bookingReference guestDetails pricing');
-    
-    if (!payment) throw new Error('Payment not found');
-    
+    const payment = await Payment.findOne({ transactionId }).populate(
+      "bookingId",
+      "bookingReference guestDetails pricing",
+    );
+
+    if (!payment) throw new Error("Payment not found");
+
     return payment;
   }
 
@@ -331,7 +347,7 @@ class PaymentService {
    */
   async getPayments(filters) {
     const { page = 1, limit = 10, status, provider, bookingId } = filters;
-    
+
     const query = {};
     if (status) query.status = status;
     if (provider) query.provider = provider;
@@ -341,11 +357,11 @@ class PaymentService {
 
     const [payments, total] = await Promise.all([
       Payment.find(query)
-        .populate('bookingId', 'bookingReference guestDetails')
+        .populate("bookingId", "bookingReference guestDetails")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
-      Payment.countDocuments(query)
+      Payment.countDocuments(query),
     ]);
 
     return {
@@ -354,8 +370,8 @@ class PaymentService {
         page: parseInt(page),
         limit: parseInt(limit),
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

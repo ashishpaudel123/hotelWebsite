@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { TableRow } from "./table-row";
 
 const Table = React.forwardRef<
   HTMLTableElement,
@@ -43,7 +44,7 @@ const TableHead = React.forwardRef<
     ref={ref}
     className={cn(
       "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-      className
+      className,
     )}
     {...props}
   />

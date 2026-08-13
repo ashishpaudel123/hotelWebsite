@@ -1,15 +1,15 @@
-const nodemailer = require('nodemailer');
-const logger = require('../../utils/logger');
+const nodemailer = require("../../../utils/nodemailer");
+const logger = require("../../../utils/logger");
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true",
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
+    pass: process.env.SMTP_PASS,
+  },
 });
 
 class EmailService {
@@ -63,17 +63,21 @@ class EmailService {
                   <strong>Payment Status:</strong>
                   <span>${booking.paymentStatus.toUpperCase()}</span>
                 </div>
-                ${booking.rooms.map(room => `
+                ${booking.rooms
+                  .map(
+                    (room) => `
                   <div class="detail-row">
                     <strong>Room Type:</strong>
-                    <span>${room.roomTypeId?.name || 'Room'} x ${room.quantity}</span>
+                    <span>${room.roomTypeId?.name || "Room"} x ${room.quantity}</span>
                   </div>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
               </div>
               
               <p>We look forward to welcoming you!</p>
               
-              <a href="${process.env.FRONTEND_URL || 'https://yourhotel.com'}/bookings/${booking.bookingReference}" class="button">View Booking</a>
+              <a href="${process.env.FRONTEND_URL || "https://yourhotel.com"}/bookings/${booking.bookingReference}" class="button">View Booking</a>
             </div>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} Hotel Management System. All rights reserved.</p>
@@ -86,15 +90,15 @@ class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"${process.env.SMTP_FROM_NAME || 'Hotel Management'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@hotel.com'}>`,
+        from: `"${process.env.SMTP_FROM_NAME || "Hotel Management"}" <${process.env.SMTP_FROM_EMAIL || "noreply@hotel.com"}>`,
         to,
         subject: `Booking Confirmation - ${booking.bookingReference}`,
-        html
+        html,
       });
 
       logger.info(`Booking confirmation email sent to ${to}`);
     } catch (error) {
-      logger.error('Error sending booking confirmation email:', error);
+      logger.error("Error sending booking confirmation email:", error);
       throw error;
     }
   }
@@ -104,7 +108,7 @@ class EmailService {
    */
   async sendBookingCancellation({ to, booking, reason }) {
     const refundAmount = booking.cancellationPolicy?.refundAmount || 0;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -136,7 +140,7 @@ class EmailService {
                 </div>
                 <div class="detail-row">
                   <strong>Cancellation Reason:</strong>
-                  <span>${reason || 'Not provided'}</span>
+                  <span>${reason || "Not provided"}</span>
                 </div>
                 <div class="detail-row">
                   <strong>Refund Amount:</strong>
@@ -144,7 +148,7 @@ class EmailService {
                 </div>
                 <div class="detail-row">
                   <strong>Refund Status:</strong>
-                  <span>${booking.paymentStatus === 'refunded' ? 'Processed' : 'Processing'}</span>
+                  <span>${booking.paymentStatus === "refunded" ? "Processed" : "Processing"}</span>
                 </div>
               </div>
               
@@ -160,15 +164,15 @@ class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"${process.env.SMTP_FROM_NAME || 'Hotel Management'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@hotel.com'}>`,
+        from: `"${process.env.SMTP_FROM_NAME || "Hotel Management"}" <${process.env.SMTP_FROM_EMAIL || "noreply@hotel.com"}>`,
         to,
         subject: `Booking Cancelled - ${booking.bookingReference}`,
-        html
+        html,
       });
 
       logger.info(`Booking cancellation email sent to ${to}`);
     } catch (error) {
-      logger.error('Error sending booking cancellation email:', error);
+      logger.error("Error sending booking cancellation email:", error);
       throw error;
     }
   }
@@ -177,8 +181,8 @@ class EmailService {
    * Send password reset email
    */
   async sendPasswordReset({ to, resetToken, username }) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'https://yourhotel.com'}/reset-password?token=${resetToken}`;
-    
+    const resetUrl = `${process.env.FRONTEND_URL || "https://yourhotel.com"}/reset-password?token=${resetToken}`;
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -195,15 +199,15 @@ class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"${process.env.SMTP_FROM_NAME || 'Hotel Management'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@hotel.com'}>`,
+        from: `"${process.env.SMTP_FROM_NAME || "Hotel Management"}" <${process.env.SMTP_FROM_EMAIL || "noreply@hotel.com"}>`,
         to,
-        subject: 'Password Reset Request',
-        html
+        subject: "Password Reset Request",
+        html,
       });
 
       logger.info(`Password reset email sent to ${to}`);
     } catch (error) {
-      logger.error('Error sending password reset email:', error);
+      logger.error("Error sending password reset email:", error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
-const Booking = require('../../models/Booking');
-const RoomType = require('../../models/RoomType');
-const logger = require('../../utils/logger');
+const Booking = require("../../../models/Booking");
+const RoomType = require("../../../models/RoomType");
+const logger = require("../../../utils/logger");
 
 class BookingRepository {
   /**
@@ -11,7 +11,7 @@ class BookingRepository {
       const booking = await Booking.create(bookingData);
       return await this.findById(booking._id);
     } catch (error) {
-      logger.error('Error creating booking:', error);
+      logger.error("Error creating booking:", error);
       throw error;
     }
   }
@@ -22,17 +22,17 @@ class BookingRepository {
   async findById(id) {
     try {
       const booking = await Booking.findById(id)
-        .populate('customerId', 'firstName lastName email phone')
-        .populate('rooms.roomTypeId', 'name basePrice amenities')
-        .populate('assignedStaff', 'firstName lastName email');
-      
+        .populate("customerId", "firstName lastName email phone")
+        .populate("rooms.roomTypeId", "name basePrice amenities")
+        .populate("assignedStaff", "firstName lastName email");
+
       if (!booking || booking.isDeleted) {
         return null;
       }
-      
+
       return booking;
     } catch (error) {
-      logger.error('Error finding booking by ID:', error);
+      logger.error("Error finding booking by ID:", error);
       throw error;
     }
   }
@@ -43,12 +43,12 @@ class BookingRepository {
   async findByReference(reference) {
     try {
       const booking = await Booking.findOne({ bookingReference: reference })
-        .populate('customerId', 'firstName lastName email phone')
-        .populate('rooms.roomTypeId', 'name basePrice amenities');
-      
+        .populate("customerId", "firstName lastName email phone")
+        .populate("rooms.roomTypeId", "name basePrice amenities");
+
       return booking;
     } catch (error) {
-      logger.error('Error finding booking by reference:', error);
+      logger.error("Error finding booking by reference:", error);
       throw error;
     }
   }
@@ -60,36 +60,40 @@ class BookingRepository {
     try {
       // Find conflicting bookings
       const conflictingBookings = await Booking.find({
-        'rooms.roomTypeId': roomTypeId,
-        status: { $in: ['pending', 'confirmed', 'checked_in'] },
-        $or: [
-          { checkIn: { $lt: checkOut }, checkOut: { $gt: checkIn } }
-        ]
-      }).populate('rooms.roomTypeId');
+        "rooms.roomTypeId": roomTypeId,
+        status: { $in: ["pending", "confirmed", "checked_in"] },
+        $or: [{ checkIn: { $lt: checkOut }, checkOut: { $gt: checkIn } }],
+      }).populate("rooms.roomTypeId");
 
       // Calculate available rooms
       const roomType = await RoomType.findById(roomTypeId);
-      if (!roomType) return { available: false, message: 'Room type not found' };
+      if (!roomType)
+        return { available: false, message: "Room type not found" };
 
       // Count booked rooms in the conflicting period
       let bookedRooms = 0;
-      conflictingBookings.forEach(booking => {
-        const roomEntry = booking.rooms.find(r => r.roomTypeId._id.toString() === roomTypeId);
+      conflictingBookings.forEach((booking) => {
+        const roomEntry = booking.rooms.find(
+          (r) => r.roomTypeId._id.toString() === roomTypeId,
+        );
         if (roomEntry) {
           bookedRooms += roomEntry.quantity;
         }
       });
 
       const availableRooms = roomType.totalRooms - bookedRooms;
-      
+
       return {
         available: availableRooms >= quantity,
         availableCount: availableRooms,
         requestedQuantity: quantity,
-        message: availableRooms >= quantity ? 'Rooms available' : 'Insufficient rooms available'
+        message:
+          availableRooms >= quantity
+            ? "Rooms available"
+            : "Insufficient rooms available",
       };
     } catch (error) {
-      logger.error('Error checking availability:', error);
+      logger.error("Error checking availability:", error);
       throw error;
     }
   }
@@ -107,15 +111,15 @@ class BookingRepository {
         checkInStart,
         checkInEnd,
         customerId,
-        search
+        search,
       } = filters;
 
       const query = {};
-      
+
       if (status) query.status = status;
       if (paymentStatus) query.paymentStatus = paymentStatus;
       if (customerId) query.customerId = customerId;
-      
+
       // Date range filter
       if (checkInStart || checkInEnd) {
         query.checkIn = {};
@@ -126,24 +130,24 @@ class BookingRepository {
       // Search filter
       if (search) {
         query.$or = [
-          { bookingReference: { $regex: search, $options: 'i' } },
-          { 'guestDetails.email': { $regex: search, $options: 'i' } },
-          { 'guestDetails.phone': { $regex: search, $options: 'i' } }
+          { bookingReference: { $regex: search, $options: "i" } },
+          { "guestDetails.email": { $regex: search, $options: "i" } },
+          { "guestDetails.phone": { $regex: search, $options: "i" } },
         ];
       }
 
       const skip = (page - 1) * limit;
-      const sortBy = options.sortBy || 'createdAt';
-      const sortOrder = options.sortOrder === 'asc' ? 1 : -1;
+      const sortBy = options.sortBy || "createdAt";
+      const sortOrder = options.sortOrder === "asc" ? 1 : -1;
 
       const [bookings, total] = await Promise.all([
         Booking.find(query)
-          .populate('customerId', 'firstName lastName email phone')
-          .populate('rooms.roomTypeId', 'name basePrice')
+          .populate("customerId", "firstName lastName email phone")
+          .populate("rooms.roomTypeId", "name basePrice")
           .sort({ [sortBy]: sortOrder })
           .skip(skip)
           .limit(parseInt(limit)),
-        Booking.countDocuments(query)
+        Booking.countDocuments(query),
       ]);
 
       return {
@@ -152,11 +156,11 @@ class BookingRepository {
           page: parseInt(page),
           limit: parseInt(limit),
           total,
-          totalPages: Math.ceil(total / limit)
-        }
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
-      logger.error('Error finding bookings with filters:', error);
+      logger.error("Error finding bookings with filters:", error);
       throw error;
     }
   }
@@ -176,16 +180,16 @@ class BookingRepository {
               newStatus: status,
               changedBy: updatedBy,
               reason,
-              timestamp: new Date()
-            }
-          }
+              timestamp: new Date(),
+            },
+          },
         },
-        { new: true }
+        { new: true },
       );
-      
+
       return booking;
     } catch (error) {
-      logger.error('Error updating booking status:', error);
+      logger.error("Error updating booking status:", error);
       throw error;
     }
   }
@@ -198,19 +202,19 @@ class BookingRepository {
       const booking = await Booking.findByIdAndUpdate(
         id,
         {
-          status: 'cancelled',
+          status: "cancelled",
           cancellationPolicy: {
             applicable: true,
             refundAmount,
-            deadline: new Date()
-          }
+            deadline: new Date(),
+          },
         },
-        { new: true }
+        { new: true },
       );
-      
+
       return booking;
     } catch (error) {
-      logger.error('Error cancelling booking:', error);
+      logger.error("Error cancelling booking:", error);
       throw error;
     }
   }
@@ -223,12 +227,12 @@ class BookingRepository {
       const booking = await Booking.findByIdAndUpdate(
         id,
         { paymentStatus },
-        { new: true }
+        { new: true },
       );
-      
+
       return booking;
     } catch (error) {
-      logger.error('Error updating payment status:', error);
+      logger.error("Error updating payment status:", error);
       throw error;
     }
   }
@@ -241,26 +245,32 @@ class BookingRepository {
       const matchStage = {
         createdAt: {
           $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
+          $lte: new Date(endDate),
+        },
       };
 
       const stats = await Booking.aggregate([
         { $match: matchStage },
         {
           $group: {
-            _id: '$status',
+            _id: "$status",
             count: { $sum: 1 },
-            totalRevenue: { 
-              $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$pricing.total', 0] }
-            }
-          }
-        }
+            totalRevenue: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$paymentStatus", "paid"] },
+                  "$pricing.total",
+                  0,
+                ],
+              },
+            },
+          },
+        },
       ]);
 
       return stats;
     } catch (error) {
-      logger.error('Error getting booking statistics:', error);
+      logger.error("Error getting booking statistics:", error);
       throw error;
     }
   }

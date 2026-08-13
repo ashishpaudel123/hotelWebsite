@@ -18,6 +18,7 @@
     "zod": "^3.23.0",
     "@hookform/resolvers": "^3.6.0",
     "axios": "^1.7.0",
+    "combined-stream": "^1.0.8",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
     "lucide-react": "^0.400.0",

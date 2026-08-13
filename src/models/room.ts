@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 // -----------------------------------------------------------------------------
 // Room Type
@@ -17,13 +17,13 @@ const roomTypeSchema = new Schema<IRoomType>(
   {
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    description: { type: String, default: '' },
+    description: { type: String, default: "" },
     maxOccupancy: { type: Number, default: 2 },
     basePrice: { type: Number, default: 0 },
     images: { type: [String], default: [] },
     amenities: { type: [String], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // -----------------------------------------------------------------------------
@@ -31,26 +31,32 @@ const roomTypeSchema = new Schema<IRoomType>(
 // -----------------------------------------------------------------------------
 export interface IRoom extends Document {
   roomNumber: string;
-  roomType: IRoomType['_id'];
+  roomType: IRoomType["_id"];
   floor: number;
-  status: 'available' | 'occupied' | 'maintenance' | 'dirty';
+  status: "available" | "occupied" | "maintenance" | "dirty";
   images: string[];
 }
 
 const roomSchema = new Schema<IRoom>(
   {
     roomNumber: { type: String, required: true, unique: true },
-    roomType: { type: Schema.Types.ObjectId, ref: 'RoomType', required: true },
+    roomType: { type: Schema.Types.ObjectId, ref: "RoomType", required: true },
     floor: { type: Number, default: 1 },
     status: {
       type: String,
-      enum: ['available', 'occupied', 'maintenance', 'dirty'],
-      default: 'available',
+      enum: ["available", "occupied", "maintenance", "dirty"],
+      default: "available",
     },
     images: { type: [String], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const RoomType = mongoose.model<IRoomType>('RoomType', roomTypeSchema);
-export const Room = mongoose.model<IRoom>('Room', roomSchema);
+export const RoomType =
+  mongoose.models && mongoose.models.RoomType
+    ? (mongoose.models.RoomType as mongoose.Model<IRoomType>)
+    : mongoose.model<IRoomType>("RoomType", roomTypeSchema);
+export const Room =
+  mongoose.models && mongoose.models.Room
+    ? (mongoose.models.Room as mongoose.Model<IRoom>)
+    : mongoose.model<IRoom>("Room", roomSchema);
