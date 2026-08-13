@@ -1,3 +1,38 @@
-```ts
+```
+# Compiled and build artifacts
+dist/
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
 
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Backup and swap files
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```
