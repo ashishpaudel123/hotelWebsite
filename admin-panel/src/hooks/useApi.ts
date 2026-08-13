@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
-import { ApiResponse, PaginationParams, User, Role, Permission } from '@/types';
+import { ApiResponse, PaginationParams, User, Role, Permission, Booking, Room, MenuCategory, MenuItem, Event, GalleryItem, Blog, Coupon, HomepageSection, WebsiteSettings, ThemeSettings, EmailTemplate, NotificationTemplate, AnalyticsData } from '@/types';
 
 // Users
 export function useUsers(params: PaginationParams = {}) {
@@ -66,12 +66,73 @@ export function useDeleteUser() {
 }
 
 // Bookings
+import { Booking } from '@/types';
+
 export function useBookings(params: PaginationParams = {}) {
   return useQuery({
     queryKey: ['bookings', params],
     queryFn: async () => {
       const { data } = await apiClient.get<ApiResponse<Booking[]>>('/bookings', { params });
       return data;
+    },
+  });
+}
+
+export function useBooking(id: string) {
+  return useQuery({
+    queryKey: ['booking', id],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiResponse<Booking>>(`/bookings/${id}`);
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingData: Partial<Booking>) => {
+      const { data } = await apiClient.post<ApiResponse<Booking>>('/bookings', bookingData);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      const { data } = await apiClient.post<ApiResponse<Booking>>(`/bookings/${id}/cancel`, { reason });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+export function useUpdateBookingStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status, reason }: { id: string; status: string; reason?: string }) => {
+      const { data } = await apiClient.patch<ApiResponse<Booking>>(`/bookings/${id}/status`, { status, reason });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+export function useCheckAvailability() {
+  return useMutation({
+    mutationFn: async (data: { checkIn: string; checkOut: string; roomTypeId: string; quantity: number }) => {
+      const { data: response } = await apiClient.post<ApiResponse<any>>('/bookings/check-availability', data);
+      return response;
     },
   });
 }

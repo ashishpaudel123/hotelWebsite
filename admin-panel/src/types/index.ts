@@ -64,28 +64,38 @@ export interface Room {
 export interface Booking {
   _id: string;
   bookingReference: string;
-  customerId: {
+  customerId?: {
     _id: string;
     name: string;
     email: string;
     phone: string;
   };
+  guestDetails?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    country?: string;
+    specialRequests?: string;
+  };
   checkIn: string;
   checkOut: string;
   rooms: Array<{
-    roomId: string;
-    roomType: string;
+    roomTypeId: string | { _id: string; name: string; basePrice: number };
     quantity: number;
-    price: number;
+    pricePerNight: number;
+    totalNights: number;
   }>;
   pricing: {
     subtotal: number;
     tax: number;
     discount: number;
     total: number;
+    currency?: string;
   };
-  status: 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'partial' | 'refunded';
+  status: 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'failed';
+  paymentStatus: 'unpaid' | 'partial' | 'paid' | 'refunded';
+  source?: 'website' | 'mobile_app' | 'walk_in' | 'ota';
   specialRequests?: string;
   createdAt: string;
   updatedAt: string;

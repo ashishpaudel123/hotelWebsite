@@ -19,14 +19,21 @@ export default function BookingsPage() {
       cell: ({ row }) => <span className="font-medium">{row.getValue('bookingReference')}</span>,
     },
     {
-      accessorKey: 'customerId.name',
+      accessorKey: 'guestDetails',
       header: 'Guest',
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium">{row.original.customerId?.name}</p>
-          <p className="text-sm text-muted-foreground">{row.original.customerId?.email}</p>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const guest = row.original.guestDetails || row.original.customerId;
+        const name = guest?.firstName && guest?.lastName 
+          ? `${guest.firstName} ${guest.lastName}`
+          : guest?.name || 'Unknown';
+        const email = guest?.email || '';
+        return (
+          <div>
+            <p className="font-medium">{name}</p>
+            <p className="text-sm text-muted-foreground">{email}</p>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'checkIn',
@@ -49,6 +56,7 @@ export default function BookingsPage() {
           checked_in: 'bg-blue-100 text-blue-800',
           checked_out: 'bg-gray-100 text-gray-800',
           cancelled: 'bg-red-100 text-red-800',
+          failed: 'bg-red-100 text-red-800',
         };
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100'}`}>
@@ -58,9 +66,14 @@ export default function BookingsPage() {
       },
     },
     {
-      accessorKey: 'pricing.total',
+      accessorKey: 'pricing',
       header: 'Total',
-      cell: ({ row }) => `$${(row.getValue('pricing.total') as number)?.toFixed(2)}`,
+      cell: ({ row }) => {
+        const pricing = row.getValue('pricing') as { total?: number; currency?: string } | undefined;
+        const total = pricing?.total ?? 0;
+        const currency = pricing?.currency || 'NPR';
+        return <span>{currency === 'NPR' ? 'NPR' : '$'} {total.toLocaleString()}</span>;
+      },
     },
     {
       id: 'actions',
