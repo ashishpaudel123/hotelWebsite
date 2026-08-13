@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Force local dev backend URL to avoid stale env/bundle issues during testing
-const API_BASE_URL = "http://localhost:5001/api/v1";
+// Use environment variable or default to local dev backend URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
