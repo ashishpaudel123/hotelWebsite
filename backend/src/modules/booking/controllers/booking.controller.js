@@ -10,7 +10,7 @@ const {
   cancelBookingSchema,
   updateBookingStatusSchema,
   bookingQuerySchema,
-} = require("./validators/booking.validator");
+} = require("../validators/booking.validator");
 
 /**
  * @route   POST /api/v1/bookings
