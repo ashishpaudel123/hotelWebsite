@@ -23,9 +23,9 @@ export default function BookingsPage() {
       header: 'Guest',
       cell: ({ row }) => {
         const guest = row.original.guestDetails || row.original.customerId;
-        const name = guest?.firstName && guest?.lastName 
+        const name = 'firstName' in guest && guest.firstName && guest.lastName 
           ? `${guest.firstName} ${guest.lastName}`
-          : guest?.name || 'Unknown';
+          : 'name' in guest && guest.name ? guest.name : 'Unknown';
         const email = guest?.email || '';
         return (
           <div>
