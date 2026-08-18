@@ -1,36 +1,47 @@
 ```
-# Compiled and build artifacts
-dist/
-*.js
-*.js.map
-*.d.ts
-*.d.ts.map
+# Next.js build outputs
+.admin-panel/.next/
 
 # Dependencies
 node_modules/
 
-# Environment
+# Environment variables
 .env
 .env.local
 .env.*
 
-# Logs and temp files
-*.log
-*.tmp
-
-# Editors
+# IDE specific
 .vscode/
 .idea/
 
-# Python
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Backup and swap files
-*.swp
-*.swo
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# MyPy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
 
 # OS generated files
 .DS_Store
