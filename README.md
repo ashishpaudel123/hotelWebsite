@@ -1,215 +1,188 @@
-# Hotel Management & Booking System
+# Hotel Booking System
 
-A production-ready, enterprise-grade Hotel Management & Booking System built with Node.js, Express.js, MongoDB, and TypeScript.
-
-## Features
-
-### Core Modules (Implemented)
-- ✅ **Authentication Module**: JWT-based auth with refresh tokens, password reset, account locking
-- ✅ **RBAC System**: Granular permissions, role-based access control
-- ✅ **User Management**: Complete user lifecycle with soft deletes
-- ✅ **Logging**: Winston logger with file rotation and multiple transports
-- ✅ **Error Handling**: Centralized error handling with custom error codes
-- ✅ **Validation**: Zod schema validation for all inputs
-- ✅ **Rate Limiting**: Configurable rate limiters for API protection
-- ✅ **Security**: Helmet, CORS, compression middleware
-
-### Planned Modules
-- 🔄 Room Management
-- 🔄 Booking Engine
-- 🔄 Payment Integration (eSewa, Khalti)
-- 🔄 CMS (Content Management System)
-- 🔄 Restaurant & Menu Management
-- 🔄 Events & Facilities
-- 🔄 Reviews & Testimonials
--  Coupons & Offers
--  Blogs
--  Analytics & Reporting
--  Notifications
--  Audit Logs
-
-## Tech Stack
-
-- **Runtime**: Node.js 18+
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Language**: TypeScript
-- **Validation**: Zod
-- **Authentication**: JWT (jsonwebtoken)
-- **Security**: Helmet, bcryptjs
-- **Logging**: Winston
-- **Testing**: Jest (planned)
+A complete hotel management system with admin panel and public website.
 
 ## Project Structure
 
-```
-src/
-├── config/          # Configuration files
-├── middleware/      # Express middleware
-├── models/          # Mongoose models
-├── modules/         # Feature modules
-│   └── auth/        # Authentication module
-│       ├── controllers/
-│       ├── dtos/
-│       ├── repositories/
-│       ├── routes/
-│       ├── services/
-│       ├── validators/
-│       └── index.ts
-├── utils/           # Utility functions
-└── server.ts        # Application entry point
-```
+- `/backend` - Node.js/Express API server
+- `/admin-panel` - Next.js admin dashboard
+- `/website` - Public-facing website (to be implemented)
 
-## Getting Started
+## Backend Setup
 
 ### Prerequisites
-- Node.js >= 18.0.0
-- MongoDB >= 6.0
-- npm >= 9.0.0
+- Node.js 18+
+- MongoDB (local or cloud)
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd hotel-management-system
-```
-
-2. Install dependencies:
-```bash
+cd backend
 npm install
 ```
 
-3. Copy environment file:
-```bash
-cp .env.example .env
-```
+### Configuration
 
-4. Update `.env` with your configuration:
+Create `.env` file in backend directory:
+
 ```env
 NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/hotel-management
-JWT_SECRET=your-secret-key
+PORT=3000
+DATABASE=mongodb://localhost:27017/hotel-booking
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=90d
+JWT_COOKIE_EXPIRES_IN=90
 ```
 
-5. Start development server:
+### Run Backend
+
 ```bash
 npm run dev
 ```
 
-6. Build for production:
+Server will start on http://localhost:3000
+
+## Admin Panel Setup
+
+### Installation
+
 ```bash
-npm run build
-npm start
+cd admin-panel
+npm install
+```
+
+### Configuration
+
+`.env.local` is already configured with:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+```
+
+### Run Admin Panel
+
+```bash
+npm run dev
+```
+
+Admin panel will start on http://localhost:3001
+
+## Default Admin Credentials
+
+Create first admin user via API:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@hotel.com",
+    "password": "admin123",
+    "name": "Admin User",
+    "role": "admin"
+  }'
 ```
 
 ## API Endpoints
 
 ### Authentication
-- `POST /api/v1/auth/login` - Login user
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/refresh` - Refresh access token
-- `POST /api/v1/auth/forgot-password` - Request password reset
-- `POST /api/v1/auth/reset-password` - Reset password
-- `POST /api/v1/auth/logout` - Logout user
-- `GET /api/v1/auth/profile` - Get user profile
+- POST `/api/v1/auth/signup` - Register new user
+- POST `/api/v1/auth/login` - Login
+- POST `/api/v1/auth/logout` - Logout
+- GET `/api/v1/auth/me` - Get current user
+- PATCH `/api/v1/auth/update-password` - Update password
+- POST `/api/v1/auth/forgot-password` - Request password reset
+- PATCH `/api/v1/auth/reset-password/:token` - Reset password
 
-### Health Check
-- `GET /health` - Server health status
+### Rooms
+- GET `/api/v1/rooms` - Get all rooms
+- GET `/api/v1/rooms/:id` - Get room by ID
+- POST `/api/v1/rooms` - Create room (admin)
+- PATCH `/api/v1/rooms/:id` - Update room (admin)
+- DELETE `/api/v1/rooms/:id` - Delete room (admin)
+- GET `/api/v1/rooms/available` - Get available rooms
 
-## API Response Format
+### Bookings
+- GET `/api/v1/bookings` - Get all bookings
+- GET `/api/v1/bookings/:id` - Get booking by ID
+- POST `/api/v1/bookings` - Create booking
+- PATCH `/api/v1/bookings/:id` - Update booking
+- POST `/api/v1/bookings/:id/cancel` - Cancel booking
+- POST `/api/v1/bookings/:id/confirm` - Confirm booking
 
-### Success Response
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1Ni...",
-    "refreshToken": "dGhpcyBpcyBhIHJlZnJl...",
-    "expiresIn": 900,
-    "user": {
-      "id": "u_123",
-      "email": "user@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "role": "customer",
-      "permissions": ["booking:create", "booking:read"]
-    }
-  },
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
+### Users
+- GET `/api/v1/users` - Get all users (admin)
+- GET `/api/v1/users/:id` - Get user by ID
+- POST `/api/v1/users` - Create user (admin)
+- PATCH `/api/v1/users/:id` - Update user (admin)
+- DELETE `/api/v1/users/:id` - Delete user (admin)
 
-### Error Response
-```json
-{
-  "success": false,
-  "error": {
-    "code": "AUTH_001",
-    "message": "Invalid credentials",
-    "details": []
-  },
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
+### Dashboard
+- GET `/api/v1/dashboard/stats` - Get dashboard statistics
+- GET `/api/v1/dashboard/recent-bookings` - Get recent bookings
+- GET `/api/v1/dashboard/revenue-chart` - Get revenue data
 
-## Common Error Codes
+### CMS
+- GET `/api/v1/cms/blogs` - Get blog posts
+- GET `/api/v1/cms/events` - Get events
+- GET `/api/v1/cms/gallery` - Get gallery images
+- GET `/api/v1/cms/testimonials` - Get testimonials
+- GET `/api/v1/cms/menu-items` - Get menu items
+- GET `/api/v1/cms/homepage-sections` - Get homepage sections
+- GET `/api/v1/cms/website-settings` - Get website settings
+- GET `/api/v1/cms/theme-settings` - Get theme settings
 
-| Code | Status | Description |
-|------|--------|-------------|
-| AUTH_001 | 401 | Invalid credentials |
-| AUTH_002 | 401 | Token expired |
-| AUTH_003 | 403 | Account locked |
-| AUTH_004 | 401 | Invalid refresh token |
-| VAL_001 | 400 | Validation failed |
-| RES_001 | 404 | Resource not found |
-| RES_002 | 409 | Duplicate resource |
-| PERM_001 | 403 | Insufficient permissions |
-| SYS_001 | 500 | Internal server error |
+### Payments
+- POST `/api/v1/payments/initiate` - Initiate payment
+- POST `/api/v1/payments/verify` - Verify payment
+- POST `/api/v1/payments/refund` - Process refund
 
-## Security Features
+## Features Implemented
 
-- **Password Hashing**: bcryptjs with salt rounds of 12
-- **JWT Tokens**: Short-lived access tokens (15min) + long-lived refresh tokens (7 days)
-- **Account Locking**: 5 failed attempts triggers 15-minute lock
-- **Rate Limiting**: Configurable limits per endpoint type
-- **Input Validation**: Zod schemas for all inputs
-- **Security Headers**: Helmet middleware
-- **CORS**: Configured for specific origins
-- **Soft Deletes**: All entities support soft deletion
+### Backend
+✅ User authentication (JWT)
+✅ Role-based access control
+✅ Room management
+✅ Booking management
+✅ Payment processing
+✅ CMS modules
+✅ Dashboard statistics
+✅ Error handling
+✅ Email notifications (configured)
+✅ SMS notifications (configured)
 
-## Development
+### Admin Panel
+✅ Login page
+✅ Dashboard with statistics
+✅ Bookings management
+✅ Rooms management (API ready)
+✅ Users management (API ready)
+✅ Authentication context
+✅ API client with interceptors
+✅ TypeScript types
+✅ UI components
+✅ Responsive design
 
-### Run in development mode:
-```bash
-npm run dev
-```
+## Next Steps
 
-### Build for production:
-```bash
-npm run build
-```
+1. **Test the application:**
+   - Start backend: `cd backend && npm run dev`
+   - Start admin panel: `cd admin-panel && npm run dev`
+   - Create admin user via API
+   - Login to admin panel
 
-### Run tests:
-```bash
-npm test
-```
+2. **Implement remaining features:**
+   - Complete all admin panel pages
+   - Build public website
+   - Add email templates
+   - Configure payment gateway credentials
+   - Add image upload functionality
 
-### Lint code:
-```bash
-npm run lint
-```
-
-## Environment Variables
-
-See `.env.example` for all available configuration options.
-
-## License
-
-MIT
+3. **Production deployment:**
+   - Update JWT_SECRET in production
+   - Configure MongoDB connection string
+   - Set up SSL/HTTPS
+   - Configure environment variables
+   - Deploy to hosting platform
 
 ## Support
 
-For issues and questions, please create an issue in the repository.
+For issues or questions, please check the documentation or contact support.
